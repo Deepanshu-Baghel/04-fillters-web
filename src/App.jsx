@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
+import "./App.css";
 
 const App = () => {
   const [search, setSearch] = useState("");
   const [product, setProduct] = useState([]);
   const [sort, setSort] = useState("");
+  const [category, setCategory] = useState("");
 
   const fetchProduct = async () => {
     const res = await fetch("https://fakestoreapi.com/products");
@@ -15,10 +17,15 @@ const App = () => {
     fetchProduct();
   }, []);
 
-  // Filter products based on search input (case insensitive)
-  const filteredProducts = product.filter((item) =>
-    item.title.toLowerCase().includes(search.toLowerCase())
-  );
+  // Extract unique categories from product data
+  const categories = Array.from(new Set(product.map((item) => item.category)));
+
+  // Filter products based on search input (case insensitive) and category
+  const filteredProducts = product.filter((item) => {
+    const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = category ? item.category === category : true;
+    return matchesSearch && matchesCategory;
+  });
 
   // Sort products based on price
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -32,73 +39,53 @@ const App = () => {
   });
 
   return (
-    <div
-      style={{
-        padding: "20px",
-        margin: "20px",
-        border: "1px solid black",
-        borderRadius: "10px",
-        fontFamily: "Arial",
-        fontSize: "20px",
-        backgroundColor: "#f0f0f0",
-      }}
-    >
+    <div className="container">
       <h2>Product List</h2>
+      <select
+        value={sort}
+        onChange={(e) => setSort(e.target.value)}
+        className="sort-select"
+      >
+        <option value="">Sort by price</option>
+        <option value="low">Low to high</option>
+        <option value="high">High to low</option>
+      </select>
+      <select
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+        className="category-select"
+      >
+        <option value="">All Categories</option>
+        {categories.map((cat) => (
+          <option key={cat} value={cat}>
+            {cat}
+          </option>
+        ))}
+      </select>
       <div>
         <input
           type="text"
           placeholder="Search.."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{
-            padding: "8px",
-            width: "300px",
-            fontSize: "16px",
-            marginBottom: "20px",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-          }}
+          className="search-input"
         />
       </div>
-      <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
+      <ul className="product-list">
         {sortedProducts.length > 0 ? (
           sortedProducts.map((item) => (
-            <li
-              key={item.id}
-              style={{
-                padding: "10px",
-                marginBottom: "10px",
-                backgroundColor: "white",
-                borderRadius: "5px",
-                boxShadow: "0 0 5px rgba(0,0,0,0.1)",
-              }}
-            >
-              <div><strong>{item.title}</strong></div>
-              <div>Price: ${item.price.toFixed(2)}</div>
-              <div>Rating: {item.rating && item.rating.rate ? item.rating.rate : "N/A"}</div>
+            <li key={item.id} className="product-item">
+              <div className="product-title">{item.title}</div>
+              <div className="product-price">Price: ${item.price.toFixed(2)}</div>
+              <div className="product-rating">
+                Rating: {item.rating && item.rating.rate ? item.rating.rate : "N/A"}
+              </div>
             </li>
           ))
         ) : (
           <li>No products found.</li>
         )}
       </ul>
-
-      <select
-        value={sort}
-        onChange={(e) => setSort(e.target.value)}
-        style={{
-          padding: "8px",
-          width: "300px",
-          fontSize: "16px",
-          marginBottom: "20px",
-          borderRadius: "5px",
-          border: "1px solid #ccc",
-        }}
-      >
-        <option value="">Sort by price</option>
-        <option value="low">Low to high</option>
-        <option value="high">High to low</option>
-      </select>
     </div>
   );
 };
